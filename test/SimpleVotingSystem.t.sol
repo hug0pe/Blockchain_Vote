@@ -8,7 +8,7 @@ import {VotingNFT} from "../src/VotingNFT.sol";
 contract SimpleVotingSystemTest is Test {
     SimpleVotingSystem voting;
     VotingNFT votingNFT;
-    
+
     address admin = address(0x1);
     address founder = address(0x2);
     address voter1 = address(0x3);
@@ -17,20 +17,20 @@ contract SimpleVotingSystemTest is Test {
 
     function setUp() public {
         vm.startPrank(admin);
-        
+
         votingNFT = new VotingNFT();
         voting = new SimpleVotingSystem(address(votingNFT));
-        
+
         votingNFT.grantRole(votingNFT.MINTER_ROLE(), address(voting));
         voting.grantRole(voting.FOUNDER_ROLE(), founder);
-        
+
         vm.stopPrank();
     }
 
     function testAdminCanAddCandidate() public {
         vm.prank(admin);
         voting.addCandidate("Candidate 1");
-        
+
         assert(voting.getCandidatesCount() == 1);
     }
 
@@ -43,8 +43,8 @@ contract SimpleVotingSystemTest is Test {
     function testAdminCanSetWorkflowStatus() public {
         vm.prank(admin);
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES);
-        
-        assert(uint(voting.status()) == uint(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES));
+
+        assert(uint256(voting.status()) == uint256(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES));
     }
 
     function testNonAdminCannotSetWorkflowStatus() public {
@@ -56,7 +56,7 @@ contract SimpleVotingSystemTest is Test {
     function testCanRegisterCandidateWhenInREGISTER_CANDIDATES() public {
         vm.prank(admin);
         voting.addCandidate("Candidate 1");
-        
+
         assert(voting.getCandidatesCount() == 1);
     }
 
@@ -64,7 +64,7 @@ contract SimpleVotingSystemTest is Test {
         vm.startPrank(admin);
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES);
-        
+
         vm.expectRevert();
         voting.addCandidate("Candidate 2");
         vm.stopPrank();
@@ -75,7 +75,7 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES);
         vm.stopPrank();
-        
+
         vm.prank(voter1);
         vm.expectRevert();
         voting.vote(1);
@@ -86,7 +86,7 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.prank(voter1);
         vm.expectRevert("Voting not open yet");
         voting.vote(1);
@@ -97,12 +97,12 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.warp(block.timestamp + 1 hours + 1);
-        
+
         vm.prank(voter1);
         voting.vote(1);
-        
+
         assert(voting.getTotalVotes(1) == 1);
     }
 
@@ -111,12 +111,12 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.warp(block.timestamp + 1 hours + 1);
-        
+
         vm.startPrank(voter1);
         voting.vote(1);
-        
+
         vm.expectRevert("You have already voted");
         voting.vote(1);
         vm.stopPrank();
@@ -128,12 +128,12 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 2");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.warp(block.timestamp + 1 hours + 1);
-        
+
         vm.prank(voter1);
         voting.vote(1);
-        
+
         vm.prank(voter1);
         vm.expectRevert("You have already voted");
         voting.vote(2);
@@ -144,12 +144,12 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.warp(block.timestamp + 1 hours + 1);
-        
+
         vm.prank(voter1);
         voting.vote(1);
-        
+
         assert(votingNFT.hasNFT(voter1));
     }
 
@@ -158,7 +158,7 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES);
         vm.stopPrank();
-        
+
         vm.prank(founder);
         vm.expectRevert("No ETH sent");
         voting.fundCandidate{value: 0}(1);
@@ -170,21 +170,21 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 2");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.warp(block.timestamp + 1 hours + 1);
-        
+
         vm.prank(voter1);
         voting.vote(1);
-        
+
         vm.prank(voter2);
         voting.vote(2);
-        
+
         vm.prank(voter3);
         voting.vote(1);
-        
+
         vm.prank(admin);
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.COMPLETED);
-        
+
         SimpleVotingSystem.Candidate memory winner = voting.getWinner();
         assertEq(winner.id, 1);
         assertEq(winner.voteCount, 2);
@@ -193,7 +193,7 @@ contract SimpleVotingSystemTest is Test {
     function testCannotGetWinnerOutsideCompletedStatus() public {
         vm.prank(admin);
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES);
-        
+
         vm.expectRevert();
         voting.getWinner();
     }
@@ -204,7 +204,7 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 2");
         voting.addCandidate("Candidate 3");
         vm.stopPrank();
-        
+
         assertEq(voting.getCandidatesCount(), 3);
     }
 
@@ -213,12 +213,12 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.warp(block.timestamp + 1 hours + 1);
-        
+
         vm.prank(voter1);
         voting.vote(1);
-        
+
         assertEq(voting.getTotalVotes(1), 1);
     }
 
@@ -227,9 +227,9 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.warp(block.timestamp + 1 hours + 1);
-        
+
         vm.prank(voter1);
         vm.expectRevert("Invalid candidate ID");
         voting.vote(999);
@@ -248,36 +248,36 @@ contract SimpleVotingSystemTest is Test {
 
     function testMultipleStatusTransitions() public {
         vm.startPrank(admin);
-        
-        assert(uint(voting.status()) == uint(SimpleVotingSystem.WorkflowStatus.REGISTER_CANDIDATES));
-        
+
+        assert(uint256(voting.status()) == uint256(SimpleVotingSystem.WorkflowStatus.REGISTER_CANDIDATES));
+
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES);
-        assert(uint(voting.status()) == uint(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES));
-        
+        assert(uint256(voting.status()) == uint256(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES));
+
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
-        assert(uint(voting.status()) == uint(SimpleVotingSystem.WorkflowStatus.VOTE));
-        
+        assert(uint256(voting.status()) == uint256(SimpleVotingSystem.WorkflowStatus.VOTE));
+
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.COMPLETED);
-        assert(uint(voting.status()) == uint(SimpleVotingSystem.WorkflowStatus.COMPLETED));
-        
+        assert(uint256(voting.status()) == uint256(SimpleVotingSystem.WorkflowStatus.COMPLETED));
+
         vm.stopPrank();
     }
 
     function testCandidateRegisteredEvent() public {
         vm.prank(admin);
-        
+
         vm.expectEmit(true, true, true, true);
         emit SimpleVotingSystem.CandidateRegistered(1, "Candidate 1");
-        
+
         voting.addCandidate("Candidate 1");
     }
 
     function testWorkflowStatusChangedEvent() public {
         vm.prank(admin);
-        
+
         vm.expectEmit(true, true, true, true);
         emit SimpleVotingSystem.WorkflowStatusChanged(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES);
-        
+
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.FOUND_CANDIDATES);
     }
 
@@ -286,14 +286,14 @@ contract SimpleVotingSystemTest is Test {
         voting.addCandidate("Candidate 1");
         voting.setWorkflowStatus(SimpleVotingSystem.WorkflowStatus.VOTE);
         vm.stopPrank();
-        
+
         vm.warp(block.timestamp + 1 hours + 1);
-        
+
         vm.prank(voter1);
-        
+
         vm.expectEmit(true, true, true, true);
         emit SimpleVotingSystem.Voted(voter1, 1);
-        
+
         voting.vote(1);
     }
 }

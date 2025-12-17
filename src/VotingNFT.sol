@@ -5,7 +5,6 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract VotingNFT is ERC721, AccessControl {
-
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     uint256 private tokenId;
 
@@ -23,12 +22,7 @@ contract VotingNFT is ERC721, AccessControl {
         _mint(to, tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, AccessControl)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
